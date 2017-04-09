@@ -1,0 +1,78 @@
+SELECT DISTINKT T.NAME,  T.TITLE, C.CNO, C.CNAME 
+FROM TEACHERS T,  TSC, COURSE C
+WHERE  T.TNO = TSC.TNO and C.TNO = TSC.CNO
+--9
+SELECT COUNT( *) 
+FROM TEACHERS T
+WHERE NOT EXISTS(SELECT * FROM TSC WHERE TSC.TNO = T.TNO)
+
+--25
+CREATE VIEW LIczbaUczestmnik AS 
+SELECT C.CNO, COUNT(*) AS LICZBA
+FROM COURSES C, TSC, STUDENTS S
+WHERE C.CNO = TSC.CNO and S.SNO = TSC.SNO
+GROUP BY C.CNO, C.CNAME -- ORDER -
+
+SELECT * 
+FROM LIczbaUczestmnik 
+WHERE Liczba = ( 
+	SELECT MIN(Liczba) FROM LIczbaUczestmnik
+	)
+
+
+-------------------------------------
+--Podaje datê ostatnich wyborów
+CREATE VIEW OstatnieWybory AS 
+SELECT MAX(W.Data) AS Data
+FROM Wybory W
+
+--Pokazuje wszystkich kandydatów z ostatnich wyborów i informacje o okrêgu, miejsu na liœcie i partii
+SELECT K.Imie, K.Nazwisko, L.NumerOkrêguWyborczego, L.MiejsceNaLiœæie, L.NazwaKomitetu
+FROM Kandydaci K, ListyWyborcze L, OstatnieWybory W
+WHERE L.DataWyborów = W.Data AND K.PESEL = L.PESEL
+
+--Sumuje wyniki kandydataw w wyborach
+CREATE VIEW WynikKandydatów AS 
+SELECT W.PESEL, SUM(W.IloœæUzyskanychG³osów) AS Wynik
+FROM WynikiKandydanci W, OstatnieWybory
+WHERE W.DataWyborów = OstatnieWybory.Data
+GROUP BY W.PESEL
+
+--Kto ile razy mia³ prawa wyborcze
+SELECT S.Nazwisko, S.Imie, COUNT(*) AS Ile
+FROM SpisLudnosci S, Wyborcy W
+WHERE S.PESEL =  W.PESEL
+GROUP BY W.PESEL, S.Nazwisko, S.Imie
+
+--Kto nie móg³ braæ udzia³u w ostatnich wyborach
+SELECT *
+FROM SpisLudnosci S
+WHERE NOT EXISTS (SELECT  * FROM Wyborcy W, OstatnieWybory O WHERE W.DataWyborow = O.Data AND W.PESEL = S.PESEL)
+
+--Wyniki kandydatów
+SELECT K.Nazwisko, K.Imie, W.Wynik
+FROM Kandydaci K, WynikKandydatów W
+WHERE K.PESEL = W.PESEL
+
+--Kto uzyska³ najwy¿szy wynik
+SELECT K.Imie, K.Nazwisko, W.Wynik 
+FROM Kandydaci K, WynikKandydatów W
+WHERE K.PESEL = W.PESEL AND W.Wynik = (SELECT MAX(Wynik) FROM WynikKandydatów)
+
+--Posortowane obwody po najwy¿szej Frekfencji
+SELECT P.MiastoObwodu, P.NumerObowdu, P.Frekfencja
+FROM Protokó³ P, OstatnieWybory
+WHERE P.DataWyborów = OstatnieWybory.Data 
+ORDER BY P.Frekfencja DESC
+
+
+-- Ile razy dany kandydat bra³ udzia³ w ró¿nych wyborach
+CREATE VIEW IleByl AS
+SELECT L.PESEL, COUNT(*) AS Ile
+FROM ListyWyborcze L
+GROUP BY L.PESEL
+
+SELECT K.Nazwisko, K.Imie, I.Ile
+FROM Kandydaci K, IleByl I
+WHERE K.PESEL = I.PESEL
+

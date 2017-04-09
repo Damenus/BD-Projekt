@@ -1,0 +1,274 @@
+CREATE TABLE SpisLudnosci ( PESEL Char(11) Primary key NOT NULL CHECK(PESEL LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
+							Imie VARCHAR(30) NOT NULL, 
+							Nazwisko VARCHAR(50)  NOT NULL,
+							DataUrodzenia Date NOT NULL,
+							DataSmierci Date,
+							MaPrawaWyborcze BIT NOT NULL    
+							);
+
+CREATE TABLE Prezydenci (	PESEL Char(11) Primary key NOT NULL CHECK(PESEL LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
+							Imie VARCHAR(30) NOT NULL, 
+							Nazwisko VARCHAR(50)  NOT NULL
+							);
+
+CREATE TABLE Wybory (		Data Date PRIMARY KEY NOT NULL,
+							Og³osi³ Char(11) REFERENCES Prezydenci NOT NULL
+							);
+
+CREATE TABLE Wyborcy (		PESEL Char(11) REFERENCES SpisLudnosci NOT NULL,
+							DataWyborow Date REFERENCES Wybory NOT NULL,
+							MiastoZamieszkania VARCHAR(50) NOT NULL,
+							UlicaZamieszkania  VARCHAR(50) NOT NULL,
+							NumerDomuZamieszkania VARCHAR(10) NOT NULL,
+							PRIMARY KEY(PESEL, DataWyborow),	
+							);
+
+CREATE TABLE OkrêgiWyborcze (	Numer INT Primary Key NOT NULL,
+								IloœæMandatów INT NOT NULL
+							);
+
+CREATE TABLE Obwody (		Numer INT NOT NULL,
+							Miasto VARCHAR(15) NOT NULL,
+							PRIMARY KEY(Numer, Miasto),
+							Okr¹gWyborczy INT REFERENCES OkrêgiWyborcze	NOT NULL
+							);
+
+CREATE TABLE KomitetyWyborcze (	Nazwa VARCHAR(100) NOT NULL, 
+								SkrótNazwy VARCHAR(8) NOT NULL,
+								DataWyborów Date REFERENCES Wybory NOT NULL,
+								PRIMARY KEY(SkrótNazwy, DataWyborów)
+							);
+
+CREATE TABLE Kandydaci (	PESEL Char(11) Primary key NOT NULL CHECK(PESEL LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
+							Imie VARCHAR(30) NOT NULL, 
+							Nazwisko VARCHAR(50)  NOT NULL,
+							DataUrodzenia Date NOT NULL,   
+							);
+
+CREATE TABLE ListyWyborcze (	NazwaKomitetu VARCHAR(8) NOT NULL,
+								DataWyborów Date NOT NULL,
+								PESEL CHAR(11) REFERENCES Kandydaci NOT NULL,
+								MiejsceNaLiœæie INT NOT NULL,
+								NumerOkrêguWyborczego INT REFERENCES OkrêgiWyborcze NOT NULL,
+								FOREIGN KEY (NazwaKomitetu,DataWyborów) REFERENCES KomitetyWyborcze(SkrótNazwy,DataWyborów), 
+								PRIMARY KEY (DataWyborów,PESEL),
+								UNIQUE (MiejsceNaLiœæie, DataWyborów, NazwaKomitetu, NumerOkrêguWyborczego) 
+							);
+
+CREATE TABLE Protokó³ (		DataWyborów Date REFERENCES Wybory NOT NULL,
+							NumerObowdu INT NOT NULL,
+							MiastoObwodu VARCHAR(15) NOT NULL,
+							FOREIGN KEY (NumerObowdu,MiastoObwodu) REFERENCES Obwody(Numer,Miasto),
+							Frekfencja FLOAT NOT NULL, -- iloœæ ludzi która by³a w danej klomisji na wyborach
+							IloœæKartWa¿nych INT NOT NULL,
+							IloœæKartNiewa¿nych INT NOT NULL,
+							IloœæG³osówWa¿nych	INT NOT NULL,
+							IloœæG³osówNiewa¿nych INT NOT NULL,
+							PRIMARY KEY (DataWyborów,NumerObowdu, MiastoObwodu),
+							CHECK (Frekfencja = IloœæKartWa¿nych + IloœæKartNiewa¿nych AND IloœæKartWa¿nych = IloœæG³osówWa¿nych + IloœæG³osówNiewa¿nych)
+							);
+
+CREATE TABLE WynikiKandydanci (	DataWyborów Date NOT NULL,
+								PESEL CHAR(11) NOT NULL,
+								IloœæUzyskanychG³osów INT NOT NULL,
+								NumerObwodu INT NOT NULL,
+								MiastoObwodu  VARCHAR(15) NOT NULL,
+								FOREIGN KEY (DataWyborów,PESEL) REFERENCES ListyWyborcze(DataWyborów,PESEL),
+								FOREIGN KEY (NumerObwodu,MiastoObwodu) REFERENCES Obwody(Numer,Miasto),
+								PRIMARY KEY (PESEL,DataWyborów,NumerObwodu,MiastoObwodu)
+							);
+
+INSERT INTO OkrêgiWyborcze Values ('1', '2');
+INSERT INTO OkrêgiWyborcze Values ('2', '1');
+INSERT INTO OkrêgiWyborcze Values ('3', '2');
+INSERT INTO OkrêgiWyborcze Values ('4', '2');
+
+INSERT INTO Obwody Values ('1', 'Gdañsk', '3');
+INSERT INTO Obwody Values ('1', 'Warszawa', '1');
+INSERT INTO Obwody Values ('1', 'Elbl¹g', '3');
+INSERT INTO Obwody Values ('2', 'Gdañsk', '3');
+INSERT INTO Obwody Values ('3', 'Gdañsk', '3');
+INSERT INTO Obwody Values ('2', 'Warszawa', '1');
+INSERT INTO Obwody Values ('3', 'Warszawa', '1');
+INSERT INTO Obwody Values ('4', 'Warszawa', '1');
+
+INSERT INTO SpisLudnosci Values ( '19312312342', 'Jan', 'Nowak', '1996-01-25', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '99332312523', 'Marta', 'Mucek', '1986-01-19', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '84101711999', 'Zygmunt', 'Franciszek', '1984-10-17', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '01011200338', 'Teofil', 'Ledwoñ', '2001-01-12', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '68051512868', 'Katarzyna', 'Pruœ', '1968-05-15', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '59081617823', 'Katarzyna', 'Kuskowska', '1959-08-16', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '30070702661', 'Adrian', 'Radomski', '1930-07-07', '2012-09-01', 0);
+INSERT INTO SpisLudnosci Values ( '63092114839', 'B³a¿ej', 'Leporowski', '1963-09-21', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '59081009578', 'Pawe³', 'Górnicz', '1959-08-10', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '24100904495', 'Martyna', 'Kowalska', '1924-10-09', '1999-01-29', 0);
+INSERT INTO SpisLudnosci Values ( '97052404623', 'Anna', 'Ginter', '1997-05-24', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '38070416083', 'Agata', 'Lango', '1938-07-04', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '49040405938', 'Agata', 'Lenarczyk', '1949-04-04', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '44102106909', 'Jan', 'Kowalski', '1944-10-21', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '58112513417', 'Jakub', 'Trzebiatowski', '1958-11-25', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '08301604437', 'Marek', 'Neyman', '2008-03-16', NULL, 0);
+INSERT INTO SpisLudnosci Values ( '80062807871', 'Micha³', 'Dembski', '1980-06-28', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '73020209768', 'Filip', 'Wrzosek', '1973-02-02', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '91070111744', 'Dominika', 'Krzyszczyk', '1991-07-01', NULL, 1);
+INSERT INTO SpisLudnosci Values ( '83040702107', 'Jerzy', 'Rzeœniowiecki', '1983-04-07', NULL, 1);
+
+INSERT INTO Prezydenci Values ( '72051601012', 'Andrzej', 'Duda');
+INSERT INTO Prezydenci Values ( '52060412981', 'Bronis³aw', 'Komorowski');
+INSERT INTO Prezydenci Values ( '49061809213', 'Lech', 'Kaczyñski');
+INSERT INTO Prezydenci Values ( '54111524192', 'Aleksander', 'Kwaœniewski');
+INSERT INTO Prezydenci Values ( '43092913113', 'Lech', 'Wa³êsa');
+
+INSERT INTO Wybory Values ( '2015-10-25', '52060412981');
+INSERT INTO Wybory Values ( '2011-10-09', '52060412981');
+INSERT INTO Wybory Values ( '2007-10-21', '49061809213');
+INSERT INTO Wybory Values ( '2005-09-25', '49061809213');
+INSERT INTO Wybory Values ( '2001-09-23', '54111524192');
+INSERT INTO Wybory Values ( '1997-09-21', '54111524192');
+INSERT INTO Wybory Values ( '1993-09-19', '43092913113');
+INSERT INTO Wybory Values ( '1991-10-27', '43092913113');
+
+INSERT INTO Wyborcy Values ( '19312312342', '2011-10-09', 'Gdañsk', 'D³ugie Ogrody', '123');
+INSERT INTO Wyborcy Values ( '99332312523', '2011-10-09', 'Gdañsk', 'S³oneczna', '1');
+INSERT INTO Wyborcy Values ( '84101711999', '2011-10-09', 'Warszawa', 'Gdañska', '1');
+INSERT INTO Wyborcy Values ( '68051512868', '2011-10-09', 'Warszawa', 'Gdañska', '2');
+INSERT INTO Wyborcy Values ( '59081617823', '2011-10-09', 'Gdañsk', 'D³uga', '1');
+INSERT INTO Wyborcy Values ( '63092114839', '2011-10-09', 'Gdañsk', 'D³uga', '2');
+INSERT INTO Wyborcy Values ( '30070702661', '2011-10-09', 'Gdañsk', 'Jesienna', '1');
+INSERT INTO Wyborcy Values ( '59081009578', '2011-10-09', 'Gdañsk', 'Startowa', '1a');
+INSERT INTO Wyborcy Values ( '97052404623', '2011-10-09', 'Gdañsk', 'Klonowa', '3');
+INSERT INTO Wyborcy Values ( '38070416083', '2011-10-09', 'Warszawa', 'Letnia', '45');
+INSERT INTO Wyborcy Values ( '49040405938', '2011-10-09', 'Warszawa', 'Wiosenna', '12');
+INSERT INTO Wyborcy Values ( '44102106909', '2011-10-09', 'Warszawa', 'Jana Paw³a', '12');
+INSERT INTO Wyborcy Values ( '58112513417', '2011-10-09', 'Gdañsk', 'Jana Paw³a', '12');
+INSERT INTO Wyborcy Values ( '80062807871', '2011-10-09', 'Gdañsk', 'Zeusa', '1');
+INSERT INTO Wyborcy Values ( '73020209768', '2011-10-09', 'Warszawa', 'Judyma', '9');
+INSERT INTO Wyborcy Values ( '91070111744', '2011-10-09', 'Elbl¹g', 'G³owna', '1');
+INSERT INTO Wyborcy Values ( '83040702107', '2011-10-09', 'Elbl¹g', 'Kwiatowa', '13');
+
+INSERT INTO Wyborcy Values ( '19312312342', '2015-10-25', 'Gdañsk', 'D³ugie Ogrody', '123');
+INSERT INTO Wyborcy Values ( '99332312523', '2015-10-25', 'Warszawa', 'Psia', '21');
+INSERT INTO Wyborcy Values ( '84101711999', '2015-10-25', 'Warszawa', 'Gdañska', '1');
+INSERT INTO Wyborcy Values ( '68051512868', '2015-10-25', 'Warszawa', 'Gdañska', '2');
+INSERT INTO Wyborcy Values ( '59081617823', '2015-10-25', 'Gdañsk', 'D³uga', '1');
+INSERT INTO Wyborcy Values ( '63092114839', '2015-10-25', 'Gdañsk', 'D³uga', '2');
+INSERT INTO Wyborcy Values ( '59081009578', '2015-10-25', 'Gdañsk', 'Startowa', '1a');
+INSERT INTO Wyborcy Values ( '97052404623', '2015-10-25', 'Gdañsk', 'Klonowa', '3');
+INSERT INTO Wyborcy Values ( '38070416083', '2015-10-25', 'Warszawa', 'Letnia', '45');
+INSERT INTO Wyborcy Values ( '49040405938', '2015-10-25', 'Warszawa', 'Wiosenna', '12');
+INSERT INTO Wyborcy Values ( '44102106909', '2015-10-25', 'Warszawa', 'Jana Paw³a', '12');
+INSERT INTO Wyborcy Values ( '58112513417', '2015-10-25', 'Gdañsk', 'Jana Paw³a', '12');
+INSERT INTO Wyborcy Values ( '80062807871', '2015-10-25', 'Gdañsk', 'Zeusa', '1');
+INSERT INTO Wyborcy Values ( '73020209768', '2015-10-25', 'Warszawa', 'Judyma', '9');
+INSERT INTO Wyborcy Values ( '91070111744', '2015-10-25', 'Elbl¹g', 'G³owna', '1');
+INSERT INTO Wyborcy Values ( '83040702107', '2015-10-25', 'Elbl¹g', 'Kwiatowa', '13');
+
+INSERT INTO Kandydaci Values ('84101711999', 'Zygmunt', 'Franciszek', '1984-10-17');
+INSERT INTO Kandydaci Values ('01011200338', 'Teofil', 'Ledwoñ', '2001-01-12');
+INSERT INTO Kandydaci Values ('30070702661', 'Adrian', 'Radomski', '1930-07-07');
+INSERT INTO Kandydaci Values ('73020209768', 'Filip', 'Wrzosek', '1973-02-02');
+INSERT INTO Kandydaci Values ('83040702107', 'Jerzy', 'Rzeœniowiecki', '1983-04-07');
+
+
+INSERT INTO KomitetyWyborcze Values('Komitet Prawa i Sprawiedliwoœci', 'PIS', '2015-10-25');
+INSERT INTO KomitetyWyborcze Values('Komitet Platforma Obywatelska', 'PO', '2015-10-25');
+INSERT INTO KomitetyWyborcze Values('Komitet Polskie Stronnictwo Ludowe', 'PSL', '2015-10-25');
+INSERT INTO KomitetyWyborcze Values('Komitet Koalicji Odnowy Rzeczypospolitej Wolnoœæ i Nadzieja', 'KORWIN', '2015-10-25');
+INSERT INTO KomitetyWyborcze Values('Komitet Ruchu Kukiza', 'KUKIZ15', '2015-10-25');
+
+INSERT INTO KomitetyWyborcze Values('Komitet Prawa i Sprawiedliwoœci', 'PIS', '2011-10-09');
+INSERT INTO KomitetyWyborcze Values('Komitet Platforma Obywatelska', 'PO', '2011-10-09');
+INSERT INTO KomitetyWyborcze Values('Komitet Polskie Stronnictwo Ludowe', 'PSL', '2011-10-09');
+INSERT INTO KomitetyWyborcze Values('Komitet Sojuszu Lewicy Demokratycznej', 'SLD', '2011-10-09');
+
+
+INSERT INTO ListyWyborcze Values( 'KORWIN','2015-10-25', '84101711999', '1', '3');
+INSERT INTO ListyWyborcze Values( 'PO','2015-10-25', '01011200338', '1', '3');
+INSERT INTO ListyWyborcze Values( 'PO','2015-10-25', '30070702661', '2', '3');
+INSERT INTO ListyWyborcze Values( 'PIS','2015-10-25', '73020209768', '1', '3');
+INSERT INTO ListyWyborcze Values( 'PIS','2015-10-25', '83040702107', '2', '3');
+
+INSERT INTO ListyWyborcze Values( 'PO','2011-10-09', '84101711999', '2', '3');
+INSERT INTO ListyWyborcze Values( 'PO','2011-10-09', '01011200338', '1', '3');
+INSERT INTO ListyWyborcze Values( 'PSL','2011-10-09', '30070702661', '2', '3');
+INSERT INTO ListyWyborcze Values( 'PIS','2011-10-09', '73020209768', '1', '3');
+INSERT INTO ListyWyborcze Values( 'PIS','2011-10-09', '83040702107', '2', '3');
+
+INSERT INTO Protokó³ Values( '2015-10-25','1', 'Gdañsk', '450', '450', '0', '440', '10');
+INSERT INTO Protokó³ Values( '2015-10-25','2', 'Gdañsk', '654', '644', '10', '640', '4');
+INSERT INTO Protokó³ Values( '2015-10-25','3', 'Gdañsk', '312', '312', '0', '310', '2');
+INSERT INTO Protokó³ Values( '2015-10-25','1', 'Warszawa', '511', '510', '1', '507', '3');
+INSERT INTO Protokó³ Values( '2015-10-25','2', 'Warszawa', '111', '111', '0', '111', '0');
+INSERT INTO Protokó³ Values( '2015-10-25','3', 'Warszawa', '601', '601', '0', '601', '0');
+INSERT INTO Protokó³ Values( '2015-10-25','4', 'Warszawa', '712', '712', '0', '704', '8');
+INSERT INTO Protokó³ Values( '2015-10-25','1', 'Elbl¹g', '120', '118', '2', '118', '0');
+
+INSERT INTO Protokó³ Values( '2011-10-09','1', 'Gdañsk', '412', '410', '2', '404', '6');
+INSERT INTO Protokó³ Values( '2011-10-09','2', 'Gdañsk', '600', '600', '0', '600', '0');
+INSERT INTO Protokó³ Values( '2011-10-09','3', 'Gdañsk', '412', '407', '5', '405', '2');
+INSERT INTO Protokó³ Values( '2011-10-09','1', 'Warszawa', '512', '511', '1', '511', '0');
+INSERT INTO Protokó³ Values( '2011-10-09','2', 'Warszawa', '101', '101', '0', '98', '3');
+INSERT INTO Protokó³ Values( '2011-10-09','3', 'Warszawa', '541', '541', '0', '541', '0');
+INSERT INTO Protokó³ Values( '2011-10-09','4', 'Warszawa', '699', '698', '1', '690', '8');
+INSERT INTO Protokó³ Values( '2011-10-09','1', 'Elbl¹g', '80', '80', '0', '78', '2');
+
+INSERT INTO WynikiKandydanci Values( '2015-10-25','84101711999', '12', '3', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','01011200338', '19', '3', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','30070702661', '24', '3', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','73020209768', '0', '3', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','83040702107', '42', '3', 'Gdañsk');
+
+INSERT INTO WynikiKandydanci Values( '2011-10-09','84101711999', '24', '3', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','01011200338', '1', '3', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','30070702661', '24', '3', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','73020209768', '40', '3', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','83040702107', '11', '3', 'Gdañsk');
+
+INSERT INTO WynikiKandydanci Values( '2015-10-25','84101711999', '41', '2', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','01011200338', '17', '2', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','30070702661', '31', '2', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','73020209768', '55', '2', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','83040702107', '2', '2', 'Gdañsk');
+
+INSERT INTO WynikiKandydanci Values( '2011-10-09','84101711999', '21', '2', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','01011200338', '16', '2', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','30070702661', '44', '2', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','73020209768', '60', '2', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','83040702107', '21', '2', 'Gdañsk');
+
+INSERT INTO WynikiKandydanci Values( '2015-10-25','84101711999', '32', '1', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','01011200338', '12', '1', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','30070702661', '41', '1', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','73020209768', '30', '1', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','83040702107', '12', '1', 'Gdañsk');
+
+INSERT INTO WynikiKandydanci Values( '2011-10-09','84101711999', '22', '1', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','01011200338', '51', '1', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','30070702661', '14', '1', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','73020209768', '12', '1', 'Gdañsk');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','83040702107', '0', '1', 'Gdañsk');
+
+INSERT INTO WynikiKandydanci Values( '2015-10-25','84101711999', '2', '1', 'Elbl¹g');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','01011200338', '11', '1', 'Elbl¹g');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','30070702661', '14', '1', 'Elbl¹g');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','73020209768', '6', '1', 'Elbl¹g');
+INSERT INTO WynikiKandydanci Values( '2015-10-25','83040702107', '2', '1', 'Elbl¹g');
+
+INSERT INTO WynikiKandydanci Values( '2011-10-09','84101711999', '23', '1', 'Elbl¹g');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','01011200338', '0', '1', 'Elbl¹g');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','30070702661', '4', '1', 'Elbl¹g');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','73020209768', '12', '1', 'Elbl¹g');
+INSERT INTO WynikiKandydanci Values( '2011-10-09','83040702107', '1', '1', 'Elbl¹g');
+
+DROP TABLE WynikiKandydanci;
+DROP TABLE Protokó³;
+DROP TABLE ListyWyborcze;
+DROP TABLE Kandydaci;
+DROP TABLE KomitetyWyborcze;
+DROP TABLE Obwody;
+DROP TABLE OkrêgiWyborcze;
+DROP TABLE Wyborcy;
+DROP TABLE Wybory;
+Drop TABLE Prezydenci;
+DROP TABLE SpisLudnosci;
+
